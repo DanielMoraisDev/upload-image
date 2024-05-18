@@ -3,7 +3,7 @@
 //1º - Colocar a imagem em uma pasta na raiz projeto - Não paga
 //2º - Contra serviços (API's) para adicionar imagem - Custo Alto
 import { createServer } from "node:http";
-import { writeFile, readFile, rename } from "node:fs";
+import { writeFile, readFile, copyFile } from "node:fs";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import {lerDadosUsuarios} from "./lerDadosUsuarios.mjs";
 
-const PORT = 3333;
+const PORT = 8080;
 
 //import e export
 const __filename = fileURLToPath(import.meta.url);
@@ -91,7 +91,9 @@ const server = createServer(async (request, response) => {
     }
 
     const { id, nome, bio } = fields;
+
     const imagemDePerfil = files.imagemDePerfil;
+
     //NORMALIZE O CAMINHO DA IMAGEM
 
     if (!nome || !bio || !imagemDePerfil) {
@@ -128,6 +130,7 @@ const server = createServer(async (request, response) => {
 
       //caminho/imagens/id.png
       const caminhoImagem = path.join(__dirname, "imagens", id + ".png");
+      console.log(caminhoImagem)
 
       const perfil = {
         nome: nome[0],
@@ -146,18 +149,17 @@ const server = createServer(async (request, response) => {
           return;
         }
 
-        rename(files.imagemDePerfil[0].filepath, caminhoImagem, (err) => {
+        copyFile(files.imagemDePerfil[0].filepath, caminhoImagem, (err) => {
           if (err) {
             console.log("err: ", err)
             response.writeHead(500, { "Content-Type": "application/json" });
             response.end(JSON.stringify({message: "Não é salvar a imagem" }));
             return;
           }
+
+          response.writeHead(201, { "Content-Type": "application/json" });
+          response.end(JSON.stringify({ message: "Perfil Criado" }));
         });
-
-        response.writeHead(201, { "Content-Type": "application/json" });
-        response.end(JSON.stringify({ message: "Perfil Criado" }));
-
       });
     });
   } else {
